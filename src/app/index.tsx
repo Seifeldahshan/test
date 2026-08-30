@@ -1,98 +1,130 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function ChatScreen() {
+  const [messages, setMessages] = useState([
+    { id: '1', text: 'Welcome to Chat App Test!', sender: 'received' }
+  ]);
+  const [inputText, setInputText] = useState('');
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+  const sendMessage = () => {
+    if (inputText.trim()) {
+      setMessages([...messages, { id: Date.now().toString(), text: inputText, sender: 'sent' }]);
+      setInputText('');
+    }
+  };
+
+  const renderMessage = ({ item }: { item: any }) => {
+    const isSent = item.sender === 'sent';
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <View style={[styles.messageBubble, isSent ? styles.sentMessage : styles.receivedMessage]}>
+        <Text style={styles.messageText}>{item.text}</Text>
+      </View>
     );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+  };
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Chat App Test</Text>
+        </View>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+        <FlatList
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          contentContainerStyle={styles.messageList}
+        />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type a message..."
+            placeholderTextColor="#888"
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    backgroundColor: '#075E54', // Header color to fill top safe area
   },
-  heroSection: {
+  container: {
+    flex: 1,
+    backgroundColor: '#E5DDD5', // Typical chat background
+  },
+  header: {
+    backgroundColor: '#075E54',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  messageList: {
+    padding: 10,
+  },
+  messageBubble: {
+    maxWidth: '80%',
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 5,
+  },
+  sentMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#DCF8C6',
+  },
+  receivedMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+  },
+  input: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontSize: 16,
+    maxHeight: 100,
   },
-  title: {
-    textAlign: 'center',
+  sendButton: {
+    marginLeft: 10,
+    backgroundColor: '#075E54',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  sendButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
